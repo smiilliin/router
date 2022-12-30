@@ -20,11 +20,17 @@ CERT_PATH=(인증서 cert 경로)
 KEY_PATH=(인증서 key 경로)
 ```
 
-설치 및 실행
+설치
 
 ```bash
 npm install
 
+npm run build
+```
+
+실행
+
+```bash
 ./run.sh
 ```
 
