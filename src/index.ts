@@ -3,6 +3,7 @@ import httpproxy from "http-proxy";
 import fs from "fs";
 import dotenv from "dotenv";
 import https from "https";
+import http from "http";
 
 dotenv.config();
 
@@ -23,22 +24,12 @@ const error404 = (res: express.Response) => {
 
 const bind = (name: string, port: number) => {
   app.use(`/${name}`, (req, res) => {
-    httpProxy.web(
-      req,
-      res,
-      { target: `http://localhost:${port}` },
-      error500(res)
-    );
+    httpProxy.web(req, res, { target: `http://localhost:${port}` }, error500(res));
   });
 };
 const bindIndex = (port: number) => {
   app.get(`/`, (req, res) => {
-    httpProxy.web(
-      req,
-      res,
-      { target: `http://localhost:${port}` },
-      error500(res)
-    );
+    httpProxy.web(req, res, { target: `http://localhost:${port}` }, error500(res));
   });
 };
 
@@ -59,14 +50,21 @@ app.get("*", (req, res) => {
   error404(res)();
 });
 
-const httpsServer = https.createServer(
-  {
-    key: fs.readFileSync(process.env["KEY_PATH"] as string).toString(),
-    cert: fs.readFileSync(process.env["CERT_PATH"] as string).toString(),
-  },
-  app
-);
+if (process.env["TYPE"] == "https") {
+  const httpsServer = https.createServer(
+    {
+      key: fs.readFileSync(process.env["KEY_PATH"] as string).toString(),
+      cert: fs.readFileSync(process.env["CERT_PATH"] as string).toString(),
+    },
+    app
+  );
 
-httpsServer.listen(443, () => {
-  console.log("Running gateway on port 443");
-});
+  httpsServer.listen(443, () => {
+    console.log("Running gateway on port 443");
+  });
+} else if (process.env["TYPE"] == "http") {
+  const httpServer = http.createServer(app);
+  httpServer.listen(80, () => {
+    console.log("Running gateway on port 80");
+  });
+}
