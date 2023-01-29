@@ -4,10 +4,20 @@ import fs from "fs";
 import dotenv from "dotenv";
 import https from "https";
 import http from "http";
+import rateLmiit from "express-rate-limit";
 
 dotenv.config();
 
 const app = express();
+
+app.use(
+  rateLmiit({
+    windowMs: 1 * 30 * 1000,
+    max: 10,
+    standardHeaders: false,
+    legacyHeaders: false,
+  })
+);
 
 const httpProxy = httpproxy.createProxyServer();
 
