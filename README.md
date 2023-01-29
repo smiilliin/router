@@ -1,6 +1,4 @@
-# Router
-
-Connects internal servers(ports) as a proxy!
+# Router - Connects internal servers as a proxy!
 
 ## Useage
 
