@@ -1,26 +1,32 @@
 # Router
 
-내부 서버들(포트)을 프록시로 연결시켜주는 앱입니다!
+Connects internal servers(ports) as a proxy!
 
-## 사용법
+## Useage
 
 src/bind.json
 
 ```json
 {
-  "(/이름)": 12345 //(포트)
+  "asdf": 12345,
+  "qwerty": 12346
+  "index": 8080
 }
-//이름이 index인것은 "/" 경로 포트에요!
 ```
+
+/asdf -> localhost:12345  
+/qwerty -> localhost:12346  
+/ -> localhost:8080
 
 .env
 
 ```
-CERT_PATH=(인증서 cert 경로)
-KEY_PATH=(인증서 key 경로)
+CERT_PATH=(Cert path)
+KEY_PATH=(Key path)
+TYPE=(http or https)
 ```
 
-설치
+## Install
 
 ```bash
 npm install
@@ -28,13 +34,13 @@ npm install
 npm run build
 ```
 
-실행
+## Execuse
 
 ```bash
 ./run.sh
 ```
 
-죽이기
+## Kill
 
 ```bash
 ./kill.sh
