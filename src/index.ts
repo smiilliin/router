@@ -21,7 +21,14 @@ app.use(
 
 app.use((req, res, next) => {
   if (process.env["TYPE"] === "https") {
-    if (req.protocol === "http" || req.hostname !== process.env["HOST"]) {
+    const splittedHost = req.hostname.split(".");
+    const splittedHostLength = splittedHost.length;
+
+    if (
+      req.protocol === "http" ||
+      splittedHostLength < 2 ||
+      `${splittedHost[splittedHostLength - 2]}.${splittedHost[splittedHostLength - 1]}` !== process.env["HOST"]
+    ) {
       res.redirect(`https://${process.env["HOST"]}${req.originalUrl}`);
     } else {
       res.header("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
@@ -31,6 +38,8 @@ app.use((req, res, next) => {
     next();
   }
 });
+
+const binds = JSON.parse(fs.readFileSync("src/bind.json").toString());
 
 const httpProxy = httpproxy.createProxyServer();
 
@@ -45,32 +54,21 @@ const error404 = (res: express.Response) => {
   };
 };
 
-const bind = (name: string, port: number) => {
-  app.use(`/${name}`, (req, res) => {
-    httpProxy.web(req, res, { target: `http://localhost:${port}` }, error500(res));
-  });
-};
-const bindIndex = (port: number) => {
-  app.get(`/`, (req, res) => {
-    httpProxy.web(req, res, { target: `http://localhost:${port}` }, error500(res));
-  });
-};
+app.use((req, res) => {
+  const splittedHost: Array<string> = req.hostname.split(".");
 
-const binds = JSON.parse(fs.readFileSync("src/bind.json").toString());
-
-Object.keys(binds).forEach((name: string) => {
-  const port = binds[name] as number;
-
-  console.log(`${name} ${port}`);
-  if (name !== "index") {
-    bind(name, port);
-  } else {
-    bindIndex(port);
+  let port;
+  if (splittedHost.length < 3) {
+    port = binds["index"];
+    return httpProxy.web(req, res, { target: `http://localhost:${port}` }, error500(res));
   }
-});
+  port = binds[splittedHost[0]];
 
-app.get("*", (req, res) => {
-  error404(res)();
+  if (port) {
+    return httpProxy.web(req, res, { target: `http://localhost:${port}` }, error500(res));
+  }
+
+  return error404(res);
 });
 
 if (process.env["TYPE"] == "https") {
