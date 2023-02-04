@@ -19,6 +19,19 @@ app.use(
   })
 );
 
+app.use((req, res, next) => {
+  if (process.env["TYPE"] === "https") {
+    if (req.protocol === "http" || req.hostname !== process.env["HOST"]) {
+      res.redirect(`https://${process.env["HOST"]}${req.originalUrl}`);
+    } else {
+      res.header("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
+      next();
+    }
+  } else {
+    next();
+  }
+});
+
 const httpProxy = httpproxy.createProxyServer();
 
 const error500 = (res: express.Response) => {
@@ -71,6 +84,11 @@ if (process.env["TYPE"] == "https") {
 
   httpsServer.listen(443, () => {
     console.log("Running gateway on port 443");
+  });
+
+  const httpServer = http.createServer(app);
+  httpServer.listen(80, () => {
+    console.log("Running gateway on port 80");
   });
 } else if (process.env["TYPE"] == "http") {
   const httpServer = http.createServer(app);
