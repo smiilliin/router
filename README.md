@@ -12,9 +12,9 @@ src/bind.json
 }
 ```
 
-/asdf -> localhost:12345  
-/qwerty -> localhost:12346  
-/ -> localhost:8080
+asdf.example.com -> localhost:12345  
+qwerty.example.com -> localhost:12346  
+index.example.com -> localhost:8080
 
 .env
 
@@ -22,6 +22,7 @@ src/bind.json
 CERT_PATH=(Cert path)
 KEY_PATH=(Key path)
 TYPE=(http or https)
+HOST=example.com
 ```
 
 ## Install
