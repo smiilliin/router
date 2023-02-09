@@ -8,6 +8,8 @@ import { env } from "./env";
 
 const app = express();
 
+app.disable("x-powered-by");
+
 app.use(
   rateLmiit({
     windowMs: 1 * 30 * 1000,
