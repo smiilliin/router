@@ -1,4 +1,4 @@
-# Router - Connects internal servers as a proxy!
+# Router - Connects internal servers as a reverse proxy!
 
 ## Useage
 
@@ -21,7 +21,6 @@ index.example.com -> localhost:8080
 ```
 CERT_PATH=(Cert path)
 KEY_PATH=(Key path)
-TYPE=(http or https)
 HOST=example.com
 ```
 
@@ -30,17 +29,5 @@ HOST=example.com
 ```bash
 npm install
 
-npm run build
-```
-
-## Execuse
-
-```bash
-./run.sh
-```
-
-## Kill
-
-```bash
-./kill.sh
+tsc
 ```
