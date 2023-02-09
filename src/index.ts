@@ -8,6 +8,18 @@ import rateLmiit from "express-rate-limit";
 
 dotenv.config();
 
+const env = {
+  certpath: process.env.CERT_PATH as string,
+  keypath: process.env.KEY_PATH as string,
+  host: process.env.HOST as string,
+};
+
+new Map(Object.entries(env)).forEach((value, key) => {
+  if (!value) {
+    throw new Error(`${key} not defined`);
+  }
+});
+
 const app = express();
 
 app.use(
@@ -20,15 +32,8 @@ app.use(
 );
 
 app.use((req, res, next) => {
-  const splittedHost = req.hostname.split(".");
-  const splittedHostLength = splittedHost.length;
-
-  if (
-    req.protocol === "http" ||
-    splittedHostLength < 2 ||
-    `${splittedHost[splittedHostLength - 2]}.${splittedHost[splittedHostLength - 1]}` !== process.env["HOST"]
-  ) {
-    res.redirect(`https://${process.env["HOST"]}${req.originalUrl}`);
+  if (req.protocol === "http" || !req.hostname.endsWith(env.host)) {
+    res.redirect(`https://${env.host}${req.originalUrl}`);
   } else {
     res.header("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
     next();
@@ -47,14 +52,12 @@ const proxyError = (res: express.Response) => {
 };
 
 app.use((req, res) => {
-  const splittedHost: Array<string> = req.hostname.split(".");
-
   let port;
-  if (splittedHost.length < 3) {
+  if (req.hostname === env.host) {
     port = binds["index"];
     return httpProxy.web(req, res, { target: `http://localhost:${port}`, changeOrigin: true }, proxyError(res));
   }
-  port = binds[splittedHost[0]];
+  port = binds[req.hostname.split(".")[0]];
 
   if (port) {
     return httpProxy.web(req, res, { target: `http://localhost:${port}`, changeOrigin: true }, proxyError(res));
@@ -66,8 +69,8 @@ app.use((req, res) => {
 https
   .createServer(
     {
-      key: fs.readFileSync(process.env["KEY_PATH"] as string).toString(),
-      cert: fs.readFileSync(process.env["CERT_PATH"] as string).toString(),
+      key: fs.readFileSync(env.keypath).toString(),
+      cert: fs.readFileSync(env.certpath).toString(),
     },
     app
   )
