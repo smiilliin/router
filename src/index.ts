@@ -13,7 +13,7 @@ app.disable("x-powered-by");
 app.use(
   rateLmiit({
     windowMs: 1 * 30 * 1000,
-    max: 10,
+    max: 120,
     standardHeaders: false,
     legacyHeaders: false,
   })
@@ -43,12 +43,22 @@ app.use((req, res) => {
   let port;
   if (req.hostname === env.host) {
     port = binds["index"];
-    return httpProxy.web(req, res, { target: `http://127.0.0.1:${port}`, changeOrigin: true }, proxyError(res));
+    return httpProxy.web(
+      req,
+      res,
+      { target: `http://127.0.0.1:${port}`, changeOrigin: true, ws: true },
+      proxyError(res)
+    );
   }
   port = binds[req.hostname.split(".")[0]];
 
   if (port) {
-    return httpProxy.web(req, res, { target: `http://127.0.0.1:${port}`, changeOrigin: true }, proxyError(res));
+    return httpProxy.web(
+      req,
+      res,
+      { target: `http://127.0.0.1:${port}`, changeOrigin: true, ws: true },
+      proxyError(res)
+    );
   }
 
   res.status(404).end();
