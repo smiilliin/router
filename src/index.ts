@@ -31,7 +31,7 @@ app.use((req, res, next) => {
 
 const binds = JSON.parse(fs.readFileSync("src/bind.json").toString());
 
-const httpProxy = httpproxy.createProxyServer({ ws: true });
+const httpProxy = httpproxy.createProxyServer({ changeOrigin: true });
 
 const proxyError = (res: express.Response) => {
   return (error: Error) => {
@@ -39,28 +39,29 @@ const proxyError = (res: express.Response) => {
     res.status(500).end();
   };
 };
-const proxyWsError = (ws: WebSocket) => {
+const proxyWsError = (req: express.Request) => {
   return (error: Error) => {
     console.error(error);
-    ws.close();
+    req.socket.destroy();
   };
+};
+const getPort = (host: string | undefined) => {
+  let port;
+  if (host === env.host) {
+    port = binds["index"];
+  } else {
+    const splittedHostname = host?.split(".");
+
+    if (splittedHostname && splittedHostname.length > 0) {
+      port = binds[splittedHostname[0]];
+    }
+  }
+  return port;
 };
 
 app.use((req, res) => {
-  let port;
-  if (req.headers.host === env.host) {
-    port = binds["index"];
-    return httpProxy.web(req, res, { target: `http://127.0.0.1:${port}`, changeOrigin: true }, proxyError(res));
-  }
-  const splittedHostname = req.headers.host?.split(".");
-
-  if (splittedHostname && splittedHostname.length > 0) {
-    port = binds[splittedHostname[0]];
-
-    if (port) {
-      return httpProxy.web(req, res, { target: `http://127.0.0.1:${port}`, changeOrigin: true }, proxyError(res));
-    }
-  }
+  const port = getPort(req.headers.host);
+  if (port) return httpProxy.web(req, res, { target: `http://127.0.0.1:${port}` }, proxyError(res));
 
   res.status(404).end();
 });
@@ -78,24 +79,25 @@ const httpsServer = https
   });
 
 const wss = new WebSocket.Server({ server: httpsServer });
-wss.on("connection", (ws: WebSocket, req) => {
-  let port;
-  if (req.headers.hostname === env.host) {
-    port = binds["index"];
-    return httpProxy.ws(req, { target: `ws://127.0.0.1:${port}`, changeOrigin: true }, proxyWsError(ws));
-  }
-  const splittedHostname = req.headers.host?.split(".");
 
-  if (splittedHostname && splittedHostname.length > 0) {
-    port = binds[splittedHostname[0]];
+wss.on("connection", (ws, req) => {
+  const port = getPort(req.headers.host);
 
-    if (port) {
-      return httpProxy.ws(req, { target: `ws://127.0.0.1:${port}`, changeOrigin: true }, proxyWsError(ws));
-    }
-  } else {
+  const wsProxy = new WebSocket(`ws://127.0.0.1:${port}`);
+
+  ws.on("message", (message) => {
+    wsProxy.send(message);
+  });
+
+  ws.on("close", () => {
+    wsProxy.close();
+  });
+  ws.on("error", (error: Error) => {
+    console.error(error);
     ws.close();
-  }
+  });
 });
+
 http.createServer(app).listen(80, () => {
   console.log("Running gateway on port 80");
 });
