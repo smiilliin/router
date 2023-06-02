@@ -24,7 +24,10 @@ app.use((req, res, next) => {
   if (req.protocol === "http" || !req.hostname.endsWith(env.host)) {
     res.redirect(`https://${env.host}${req.originalUrl}`);
   } else {
-    res.header("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
+    res.header(
+      "Strict-Transport-Security",
+      "max-age=63072000; includeSubDomains; preload"
+    );
     next();
   }
 });
@@ -61,7 +64,13 @@ const getPort = (host: string | undefined) => {
 
 app.use((req, res) => {
   const port = getPort(req.headers.host);
-  if (port) return httpProxy.web(req, res, { target: `http://127.0.0.1:${port}` }, proxyError(res));
+  if (port)
+    return httpProxy.web(
+      req,
+      res,
+      { target: `http://127.0.0.1:${port}` },
+      proxyError(res)
+    );
 
   res.status(404).end();
 });
@@ -94,6 +103,7 @@ wss.on("connection", (ws, req) => {
   });
   ws.on("error", (error: Error) => {
     console.error(error);
+    wsProxy.close();
     ws.close();
   });
 });
