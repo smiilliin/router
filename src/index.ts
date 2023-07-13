@@ -97,11 +97,22 @@ wss.on("connection", (ws, req) => {
   ws.on("message", (message) => {
     wsProxy.send(message);
   });
+  wsProxy.on("message", (message) => {
+    ws.send(message);
+  });
 
   ws.on("close", () => {
     wsProxy.close();
   });
+  wsProxy.on("close", () => {
+    ws.close();
+  });
   ws.on("error", (error: Error) => {
+    console.error(error);
+    wsProxy.close();
+    ws.close();
+  });
+  wsProxy.on("error", (error: Error) => {
     console.error(error);
     wsProxy.close();
     ws.close();
