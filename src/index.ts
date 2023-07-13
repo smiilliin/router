@@ -95,10 +95,10 @@ wss.on("connection", (ws, req) => {
   const wsProxy = new WebSocket(`ws://127.0.0.1:${port}`);
 
   ws.on("message", (message) => {
-    wsProxy.send(message);
+    wsProxy.send(message, { binary: false });
   });
   wsProxy.on("message", (message) => {
-    ws.send(message);
+    ws.send(message, { binary: false });
   });
 
   ws.on("close", () => {
