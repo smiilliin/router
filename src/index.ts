@@ -3,7 +3,7 @@ import httpproxy from "http-proxy";
 import fs from "fs";
 import https from "https";
 import http from "http";
-import rateLmiit from "express-rate-limit";
+// import rateLmiit from "express-rate-limit";
 import { env } from "./env";
 import WebSocket from "ws";
 
@@ -11,23 +11,20 @@ const app = express();
 
 app.disable("x-powered-by");
 
-app.use(
-  rateLmiit({
-    windowMs: 1 * 30 * 1000,
-    max: 120,
-    standardHeaders: false,
-    legacyHeaders: false,
-  })
-);
+// app.use(
+//   rateLmiit({
+//     windowMs: 1 * 30 * 1000,
+//     max: 120,
+//     standardHeaders: false,
+//     legacyHeaders: false,
+//   })
+// );
 
 app.use((req, res, next) => {
-  if (req.protocol === "http" || !req.hostname.endsWith(env.host)) {
+  if (req.protocol === "http" || !req.hostname?.endsWith(env.host)) {
     res.redirect(`https://${env.host}${req.originalUrl}`);
   } else {
-    res.header(
-      "Strict-Transport-Security",
-      "max-age=63072000; includeSubDomains; preload"
-    );
+    res.header("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
     next();
   }
 });
@@ -40,12 +37,6 @@ const proxyError = (res: express.Response) => {
   return (error: Error) => {
     console.error(error);
     res.status(500).end();
-  };
-};
-const proxyWsError = (req: express.Request) => {
-  return (error: Error) => {
-    console.error(error);
-    req.socket.destroy();
   };
 };
 const getPort = (host: string | undefined) => {
@@ -64,13 +55,7 @@ const getPort = (host: string | undefined) => {
 
 app.use((req, res) => {
   const port = getPort(req.headers.host);
-  if (port)
-    return httpProxy.web(
-      req,
-      res,
-      { target: `http://127.0.0.1:${port}` },
-      proxyError(res)
-    );
+  if (port) return httpProxy.web(req, res, { target: `http://127.0.0.1:${port}` }, proxyError(res));
 
   res.status(404).end();
 });
@@ -116,6 +101,12 @@ wss.on("connection", (ws, req) => {
     console.error(error);
     wsProxy.close();
     ws.close();
+  });
+  wsProxy.on("close", () => {
+    ws.close();
+  });
+  ws.on("close", () => {
+    wsProxy.close();
   });
 });
 
