@@ -74,24 +74,35 @@ const httpsServer = https
 
 const wss = new WebSocket.Server({ server: httpsServer });
 
-wss.on("connection", (ws, req) => {
+wss.on("connection", async (ws, req) => {
   const port = getPort(req.headers.host);
 
   const wsProxy = new WebSocket(`ws://127.0.0.1:${port}`);
 
+  try {
+    await new Promise<void>((resolve, reject) => {
+      wsProxy.once("open", () => {
+        resolve();
+      });
+      wsProxy.once("error", (error) => {
+        reject(error);
+      });
+    });
+  } catch (error) {
+    console.error(error);
+    ws.close();
+    return;
+  }
+
   ws.on("message", (message) => {
+    console.log("wsSend");
     wsProxy.send(message, { binary: false });
   });
   wsProxy.on("message", (message) => {
+    console.log("wsProxySend");
     ws.send(message, { binary: false });
   });
 
-  ws.on("close", () => {
-    wsProxy.close();
-  });
-  wsProxy.on("close", () => {
-    ws.close();
-  });
   ws.on("error", (error: Error) => {
     console.error(error);
     wsProxy.close();
