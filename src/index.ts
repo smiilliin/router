@@ -77,11 +77,16 @@ const wss = new WebSocket.Server({ server: httpsServer });
 wss.on("connection", async (ws, req) => {
   const port = getPort(req.headers.host);
 
-  const wsProxy = new WebSocket(`ws://127.0.0.1:${port}`);
+  const wsProxy = new WebSocket(`ws://127.0.0.1:${port}${req.url}`);
 
   try {
     await new Promise<void>((resolve, reject) => {
+      const connectTimeout = setTimeout(() => {
+        reject(new Error("timeout"));
+      }, 5000);
+
       wsProxy.once("open", () => {
+        clearTimeout(connectTimeout);
         resolve();
       });
       wsProxy.once("error", (error) => {
@@ -95,11 +100,9 @@ wss.on("connection", async (ws, req) => {
   }
 
   ws.on("message", (message) => {
-    console.log("wsSend");
     wsProxy.send(message, { binary: false });
   });
   wsProxy.on("message", (message) => {
-    console.log("wsProxySend");
     ws.send(message, { binary: false });
   });
 
