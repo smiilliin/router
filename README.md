@@ -1,6 +1,6 @@
 # Router - Connects internal servers as a reverse proxy!
 
-## Useage
+## Usage
 
 src/bind.json
 
