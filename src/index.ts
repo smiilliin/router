@@ -103,7 +103,7 @@ wss.on("connection", async (ws, req) => {
     wsProxy.send(message, { binary: false });
   });
   wsProxy.on("message", (message) => {
-    ws.send(message, { binary: false });
+    ws.send(message);
   });
 
   ws.on("error", (error: Error) => {
