@@ -100,10 +100,10 @@ wss.on("connection", async (ws, req) => {
   }
 
   ws.on("message", (message) => {
-    wsProxy.send(message, { binary: false });
+    wsProxy.send(message);
   });
   wsProxy.on("message", (message) => {
-    ws.send(message);
+    ws.send(message, { binary: false });
   });
 
   ws.on("error", (error: Error) => {
