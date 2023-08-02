@@ -23,6 +23,12 @@ app.disable("x-powered-by");
 app.use((req, res, next) => {
   const pattern = new RegExp(`^(.*\.)?${env.host.replace(/\./g, "\\.")}$`);
 
+  if (req.method == "OPTIONS") {
+    res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, PATCH, DELETE");
+    res.status(200).json({});
+    return;
+  }
+
   if (req.protocol === "http" || !pattern.test(req.hostname)) {
     res.redirect(`https://${env.host}${req.originalUrl}`);
   } else {
