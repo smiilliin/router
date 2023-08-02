@@ -24,7 +24,10 @@ app.use((req, res, next) => {
   const pattern = new RegExp(`^(.*\.)?${env.host.replace(/\./g, "\\.")}$`);
 
   if (req.method == "OPTIONS") {
+    res.header("Access-Control-Allow-Origin", req.headers.origin);
+    res.header("Access-Control-Allow-Headers", env.headers);
     res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, PATCH, DELETE");
+    res.header("Access-Control-Allow-Credentials", "true");
     res.status(200).json({});
     return;
   }
