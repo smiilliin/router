@@ -21,7 +21,8 @@ index.example.com -> localhost:8080
 ```
 CERT_PATH=(Cert path)
 KEY_PATH=(Key path)
-HOST=example.com
+HOST=(host)
+HEADERS=(headers to allow)
 ```
 
 ## Install
