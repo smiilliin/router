@@ -25,6 +25,7 @@ app.use((req, res, next) => {
     res.redirect(`https://${env.host}${req.originalUrl}`);
   } else {
     res.header("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
+    res.header("Access-Control-Allow-Origin", "*");
     next();
   }
 });
