@@ -21,11 +21,18 @@ app.disable("x-powered-by");
 // );
 
 app.use((req, res, next) => {
-  if (req.protocol === "http" || !req.hostname?.endsWith(env.host)) {
+  const pattern = new RegExp(`^(.*\.)?${env.host.replace(/\./g, "\\.")}$`);
+
+  if (req.protocol === "http" || !pattern.test(req.hostname)) {
     res.redirect(`https://${env.host}${req.originalUrl}`);
   } else {
     res.header("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
-    res.header("Access-Control-Allow-Origin", "*");
+
+    if (pattern.test(req.headers.origin || "")) {
+      res.header("Access-Control-Allow-Origin", req.headers.origin);
+      res.header("Access-Control-Allow-Headers", "*");
+      res.header("Access-Control-Allow-Credentials", "true");
+    }
     next();
   }
 });
