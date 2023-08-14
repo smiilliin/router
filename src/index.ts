@@ -26,7 +26,10 @@ app.use((req, res, next) => {
   if (req.method == "OPTIONS") {
     res.header("Access-Control-Allow-Origin", req.headers.origin);
     res.header("Access-Control-Allow-Headers", env.headers);
-    res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, PATCH, DELETE");
+    res.header(
+      "Access-Control-Allow-Methods",
+      "GET, POST, OPTIONS, PUT, PATCH, DELETE"
+    );
     res.header("Access-Control-Allow-Credentials", "true");
     res.status(200).json({});
     return;
@@ -35,12 +38,18 @@ app.use((req, res, next) => {
   if (req.protocol === "http" || !pattern.test(req.hostname)) {
     res.redirect(`https://${env.host}${req.originalUrl}`);
   } else {
-    res.header("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
+    res.header(
+      "Strict-Transport-Security",
+      "max-age=63072000; includeSubDomains; preload"
+    );
 
     if (pattern.test(req.headers.origin || "")) {
       res.header("Access-Control-Allow-Origin", req.headers.origin);
       res.header("Access-Control-Allow-Headers", env.headers);
-      res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, PATCH, DELETE");
+      res.header(
+        "Access-Control-Allow-Methods",
+        "GET, POST, OPTIONS, PUT, PATCH, DELETE"
+      );
       res.header("Access-Control-Allow-Credentials", "true");
     }
     next();
@@ -73,7 +82,13 @@ const getPort = (host: string | undefined) => {
 
 app.use((req, res) => {
   const port = getPort(req.headers.host);
-  if (port) return httpProxy.web(req, res, { target: `http://127.0.0.1:${port}` }, proxyError(res));
+  if (port)
+    return httpProxy.web(
+      req,
+      res,
+      { target: `http://127.0.0.1:${port}` },
+      proxyError(res)
+    );
 
   res.status(404).end();
 });
@@ -117,11 +132,11 @@ wss.on("connection", async (ws, req) => {
     return;
   }
 
-  ws.on("message", (message) => {
-    wsProxy.send(message);
+  ws.on("message", (message, isBinary) => {
+    wsProxy.send(message, { binary: isBinary });
   });
-  wsProxy.on("message", (message) => {
-    ws.send(message, { binary: false });
+  wsProxy.on("message", (message, isBinary) => {
+    ws.send(message, { binary: isBinary });
   });
 
   ws.on("error", (error: Error) => {
