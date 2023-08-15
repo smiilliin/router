@@ -1,5 +1,5 @@
 import express from "express";
-import httpproxy from "http-proxy";
+import { createProxyMiddleware } from "http-proxy-middleware";
 import fs from "fs";
 import https from "https";
 import http from "http";
@@ -58,8 +58,6 @@ app.use((req, res, next) => {
 
 const binds = JSON.parse(fs.readFileSync("src/bind.json").toString());
 
-const httpProxy = httpproxy.createProxyServer({ changeOrigin: true });
-
 const proxyError = (res: express.Response) => {
   return (error: Error) => {
     console.error(error);
@@ -79,84 +77,43 @@ const getPort = (host: string | undefined) => {
   }
   return port;
 };
-
-app.use((req, res) => {
-  const port = getPort(req.headers.host);
-  if (port)
-    return httpProxy.web(
-      req,
-      res,
-      { target: `http://127.0.0.1:${port}` },
-      proxyError(res)
-    );
-
-  res.status(404).end();
+const proxy = createProxyMiddleware({
+  ws: true,
+  changeOrigin: true,
+  router: (req) => {
+    const port = getPort(req.headers.host);
+    return `http://127.0.0.1:${port}`;
+  },
+});
+const wsProxy = createProxyMiddleware({
+  ws: true,
+  changeOrigin: true,
+  router: (req) => {
+    const port = getPort(req.headers.host);
+    return `ws://127.0.0.1:${port}${req.url}`;
+  },
 });
 
-const httpsServer = https
-  .createServer(
-    {
-      key: fs.readFileSync(env.keypath).toString(),
-      cert: fs.readFileSync(env.certpath).toString(),
-    },
-    app
-  )
-  .listen(443, () => {
-    console.log("Running gateway on port 443");
-  });
+app.use(proxy);
 
-const wss = new WebSocket.Server({ server: httpsServer });
+const httpServer = http.createServer(app);
+const httpsServer = https.createServer(
+  {
+    key: fs.readFileSync(env.keypath).toString(),
+    cert: fs.readFileSync(env.certpath).toString(),
+  },
+  app
+);
+const wsProxyRouter = wsProxy.upgrade;
+if (!wsProxyRouter) {
+  throw new Error("wsProxyRouter is undefined.");
+}
+httpServer.on("upgrade", wsProxyRouter);
+httpsServer.on("upgrade", wsProxyRouter);
 
-wss.on("connection", async (ws, req) => {
-  const port = getPort(req.headers.host);
-
-  const wsProxy = new WebSocket(`ws://127.0.0.1:${port}${req.url}`);
-
-  try {
-    await new Promise<void>((resolve, reject) => {
-      const connectTimeout = setTimeout(() => {
-        reject(new Error("timeout"));
-      }, 5000);
-
-      wsProxy.once("open", () => {
-        clearTimeout(connectTimeout);
-        resolve();
-      });
-      wsProxy.once("error", (error) => {
-        reject(error);
-      });
-    });
-  } catch (error) {
-    console.error(error);
-    ws.close();
-    return;
-  }
-
-  ws.on("message", (message, isBinary) => {
-    wsProxy.send(message, { binary: isBinary });
-  });
-  wsProxy.on("message", (message, isBinary) => {
-    ws.send(message, { binary: isBinary });
-  });
-
-  ws.on("error", (error: Error) => {
-    console.error(error);
-    wsProxy.close();
-    ws.close();
-  });
-  wsProxy.on("error", (error: Error) => {
-    console.error(error);
-    wsProxy.close();
-    ws.close();
-  });
-  wsProxy.on("close", () => {
-    ws.close();
-  });
-  ws.on("close", () => {
-    wsProxy.close();
-  });
-});
-
-http.createServer(app).listen(80, () => {
+httpServer.listen(80, () => {
   console.log("Running gateway on port 80");
+});
+httpsServer.listen(443, () => {
+  console.log("Running gateway on port 443");
 });
