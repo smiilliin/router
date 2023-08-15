@@ -78,7 +78,6 @@ const getPort = (host: string | undefined) => {
   return port;
 };
 const proxy = createProxyMiddleware({
-  ws: true,
   changeOrigin: true,
   router: (req) => {
     const port = getPort(req.headers.host);
