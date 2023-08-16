@@ -5,11 +5,11 @@ import https from "https";
 import http from "http";
 // import rateLmiit from "express-rate-limit";
 import { env } from "./env";
-import WebSocket from "ws";
 
 const app = express();
 
 app.disable("x-powered-by");
+app.set("etag", false);
 
 // app.use(
 //   rateLmiit({
