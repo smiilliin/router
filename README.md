@@ -12,6 +12,16 @@ src/bind.json
 }
 ```
 
+src/allowedOrogins.json
+
+```json
+[
+  "https://smiilliin.com",
+  "https://cloud.smiilliin.com",
+  "https://blog.smiilliin.com"
+]
+```
+
 asdf.example.com -> localhost:12345  
 qwerty.example.com -> localhost:12346  
 index.example.com -> localhost:8080

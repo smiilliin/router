@@ -24,7 +24,8 @@ app.use((req, res, next) => {
   const pattern = new RegExp(`^(.*\.)?${env.host.replace(/\./g, "\\.")}$`);
 
   if (req.method == "OPTIONS") {
-    res.header("Access-Control-Allow-Origin", req.headers.origin);
+    if (allowedOrigins.includes(req.headers.origin))
+      res.header("Access-Control-Allow-Origin", req.headers.origin);
     res.header("Access-Control-Allow-Headers", env.headers);
     res.header(
       "Access-Control-Allow-Methods",
@@ -44,7 +45,8 @@ app.use((req, res, next) => {
     );
 
     if (pattern.test(req.headers.origin || "")) {
-      res.header("Access-Control-Allow-Origin", req.headers.origin);
+      if (allowedOrigins.includes(req.headers.origin))
+        res.header("Access-Control-Allow-Origin", req.headers.origin);
       res.header("Access-Control-Allow-Headers", env.headers);
       res.header(
         "Access-Control-Allow-Methods",
@@ -57,6 +59,9 @@ app.use((req, res, next) => {
 });
 
 const binds = JSON.parse(fs.readFileSync("src/bind.json").toString());
+const allowedOrigins = JSON.parse(
+  fs.readFileSync("src/allowedOrigins.json").toString()
+);
 
 const proxyError = (res: express.Response) => {
   return (error: Error) => {
