@@ -63,12 +63,6 @@ const allowedOrigins = JSON.parse(
   fs.readFileSync("src/allowedOrigins.json").toString()
 );
 
-const proxyError = (res: express.Response) => {
-  return (error: Error) => {
-    console.error(error);
-    res.status(500).end();
-  };
-};
 const getPort = (host: string | undefined) => {
   let port;
   if (host === env.host) {
@@ -83,7 +77,7 @@ const getPort = (host: string | undefined) => {
   return port;
 };
 const proxy = createProxyMiddleware({
-  changeOrigin: true,
+  changeOrigin: false,
   router: (req) => {
     const port = getPort(req.headers.host);
     return `http://127.0.0.1:${port}`;
@@ -91,7 +85,7 @@ const proxy = createProxyMiddleware({
 });
 const wsProxy = createProxyMiddleware({
   ws: true,
-  changeOrigin: true,
+  changeOrigin: false,
   router: (req) => {
     const port = getPort(req.headers.host);
     return `ws://127.0.0.1:${port}${req.url}`;
