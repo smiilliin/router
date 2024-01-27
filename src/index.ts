@@ -3,22 +3,12 @@ import { createProxyMiddleware } from "http-proxy-middleware";
 import fs from "fs";
 import https from "https";
 import http from "http";
-// import rateLmiit from "express-rate-limit";
 import { env } from "./env";
 
 const app = express();
 
 app.disable("x-powered-by");
 app.set("etag", false);
-
-// app.use(
-//   rateLmiit({
-//     windowMs: 1 * 30 * 1000,
-//     max: 120,
-//     standardHeaders: false,
-//     legacyHeaders: false,
-//   })
-// );
 
 app.use((req, res, next) => {
   const pattern = new RegExp(`^(.*\.)?${env.host.replace(/\./g, "\\.")}$`);
@@ -78,17 +68,29 @@ const getPort = (host: string | undefined) => {
 };
 const proxy = createProxyMiddleware({
   changeOrigin: false,
+  timeout: 6000,
+  proxyTimeout: 6000,
   router: (req) => {
     const port = getPort(req.headers.host);
     return `http://127.0.0.1:${port}`;
+  },
+  onError: (err, req, res) => {
+    console.error(err);
+    res.status(500).send("Proxy error");
   },
 });
 const wsProxy = createProxyMiddleware({
   ws: true,
   changeOrigin: false,
+  timeout: 3 * 60 * 1000,
+  proxyTimeout: 3 * 60 * 1000,
   router: (req) => {
     const port = getPort(req.headers.host);
     return `ws://127.0.0.1:${port}${req.url}`;
+  },
+  onError: (err, req, res) => {
+    console.error(err);
+    res.status(500).send("Proxy error");
   },
 });
 
@@ -108,6 +110,13 @@ if (!wsProxyRouter) {
 }
 httpServer.on("upgrade", wsProxyRouter);
 httpsServer.on("upgrade", wsProxyRouter);
+
+httpServer.on("error", (err) => {
+  console.log("HTTP error", err);
+});
+httpsServer.on("error", (err) => {
+  console.log("HTTPS error", err);
+});
 
 httpServer.listen(80, () => {
   console.log("Running gateway on port 80");
