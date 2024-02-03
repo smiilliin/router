@@ -74,9 +74,8 @@ const proxy = createProxyMiddleware({
     const port = getPort(req.headers.host);
     return `http://127.0.0.1:${port}`;
   },
-  onError: (err, req, res) => {
+  onError: (err) => {
     console.error(err);
-    res.status(500).send("Proxy error");
   },
 });
 const wsProxy = createProxyMiddleware({
@@ -88,9 +87,8 @@ const wsProxy = createProxyMiddleware({
     const port = getPort(req.headers.host);
     return `ws://127.0.0.1:${port}${req.url}`;
   },
-  onError: (err, req, res) => {
+  onError: (err) => {
     console.error(err);
-    res.status(500).send("Proxy error");
   },
 });
 
