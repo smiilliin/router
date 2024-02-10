@@ -11,7 +11,12 @@ app.disable("x-powered-by");
 app.set("etag", false);
 
 app.use((req, res, next) => {
-  const pattern = new RegExp(`^(.*\.)?${env.host.replace(/\./g, "\\.")}$`);
+  const pattern = new RegExp(
+    `(?:^(.*\.)?${env.host.replace(
+      /\./g,
+      "\\."
+    )}$|^http\\:\\/\\/localhost\\:3000$)`
+  );
 
   if (req.method == "OPTIONS") {
     if (allowedOrigins.includes(req.headers.origin))
