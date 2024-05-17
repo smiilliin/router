@@ -1,3 +1,4 @@
 .env
 src/bind.json
 node_modules
+dist

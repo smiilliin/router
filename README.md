@@ -7,7 +7,7 @@ src/bind.json
 ```json
 {
   "asdf": 12345,
-  "qwerty": 12346
+  "qwerty": 12346,
   "index": 8080
 }
 ```
